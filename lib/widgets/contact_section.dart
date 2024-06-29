@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:portfolio/constants/images.dart';
+//import 'package:portfolio/services/email_service.dart'; // Fixed typo
 
 import '../constants/colors.dart';
 import '../constants/size.dart';
 import '../constants/sns_links.dart';
+import '../services/email_serrvice.dart';
+import '../utils/app_input.dart';
 import '../utils/custom_text_field.dart';
 
 import 'dart:js' as js;
 
-class ContactSection extends StatelessWidget {
+class ContactSection extends StatefulWidget {
   const ContactSection({super.key});
+
+  @override
+  State<ContactSection> createState() => _ContactSectionState();
+}
+
+class _ContactSectionState extends State<ContactSection> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController subjectController = TextEditingController();
+  final TextEditingController messageController = TextEditingController();
+
+  bool isLoading = false; // Added this line
+
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Added this line
 
   @override
   Widget build(BuildContext context) {
@@ -27,19 +44,16 @@ class ContactSection extends StatelessWidget {
               color: CustomColor.whitePrimary,
             ),
           ),
-
           const SizedBox(height: 50),
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 700,
-              maxHeight: 100,
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 if (constraints.maxWidth >= minDesktopWidth) {
                   return buildNameEmailFieldDesktop();
                 }
-
                 // else
                 return buildNameEmailFieldMobile();
               },
@@ -50,28 +64,67 @@ class ContactSection extends StatelessWidget {
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 700,
+
             ),
-            child: const CustomTextField(
+            child: CustomTextField(
               hintText: "Your message",
+              controller: messageController,
               maxLines: 16,
             ),
           ),
           const SizedBox(height: 20),
           // send button
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 700,
-            ),
-            child: SizedBox(
-              width: double.maxFinite,
-              child: ElevatedButton(
-                onPressed: () {},
-                child: const Text("Get in touch",style: TextStyle(color: CustomColor.whitePrimary,),),
+          Form( // Wrap ElevatedButton with Form
+            key: _formKey,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 700,
+              ),
+              child: SizedBox(
+                width: double.maxFinite,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (!_formKey.currentState!.validate()) { // Validate form
+                      return;
+                    }
+
+                    setState(() {
+                      isLoading = true; // Show loading indicator
+                    });
+
+                    try {
+                      await SendEmailService.sendMail(
+                        name: nameController.text,
+                        email: emailController.text,
+                        subject: subjectController.text,
+                        message: messageController.text,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Email sent successfully')),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to send email')),
+                      );
+                    } finally {
+                      setState(() {
+                        isLoading = false; // Hide loading indicator
+                      });
+                    }
+                  },
+                  child: isLoading
+                      ? const CircularProgressIndicator.adaptive(
+                    backgroundColor: Colors.white,
+                  )
+                      : const Text(
+                    "Get in touch",
+                    style: TextStyle(color: CustomColor.whitePrimary),
+                  ),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 30),
-
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 300,
@@ -79,7 +132,26 @@ class ContactSection extends StatelessWidget {
             child: const Divider(),
           ),
           const SizedBox(height: 15),
-
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(Icons.phone_outlined, color: Colors.white, size: 30),
+              SizedBox(width: 10),
+              Text(
+                '+254794227892',
+                style: TextStyle(fontSize: 15),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 300,
+            ),
+            child: const Divider(),
+          ),
+          const SizedBox(height: 15),
           // SNS icon button links
           Wrap(
             spacing: 12,
@@ -138,41 +210,106 @@ class ContactSection extends StatelessWidget {
     );
   }
 
-  Row buildNameEmailFieldDesktop() {
-    return const Row(
+  Widget buildNameEmailFieldDesktop() {
+    return Column(
       children: [
-        // name
-        Flexible(
-          child: CustomTextField(
-            hintText: "Your name",
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            // name
+            Flexible(
+              child: AppInput(
+                label: "Your name",
+                type: TextInputType.text,
+                controller: nameController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your name';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            const SizedBox(width: 15),
+            // email
+            Flexible(
+              child: AppInput(
+                label: "Your email",
+                type: TextInputType.emailAddress,
+                controller: emailController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: 15),
-        // email
-        Flexible(
-          child: CustomTextField(
-            hintText: "Your email",
-          ),
+        const SizedBox(height: 15),
+        AppInput(
+          label: "Subject",
+          type: TextInputType.text,
+          controller: subjectController,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter the subject';
+            }
+            return null;
+          },
         ),
       ],
     );
   }
 
   Column buildNameEmailFieldMobile() {
-    return const Column(
+    return Column(
+      mainAxisSize: MainAxisSize.max,
       children: [
         // name
-        Flexible(
-          child: CustomTextField(
-            hintText: "Your name",
-          ),
+        AppInput(
+          label: "Your name",
+          type: TextInputType.text,
+          controller: nameController,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your name';
+            }
+            return null;
+          },
         ),
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
+        // subject
+        AppInput(
+          label: "Subject",
+          type: TextInputType.text,
+          controller: subjectController,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter the subject';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 15),
         // email
-        Flexible(
-          child: CustomTextField(
-            hintText: "Your email",
-          ),
+        AppInput(
+          label: "Your email",
+          type: TextInputType.emailAddress,
+          controller: emailController,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter your email';
+            }
+            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+              return 'Please enter a valid email';
+            }
+            return null;
+          },
         ),
       ],
     );
