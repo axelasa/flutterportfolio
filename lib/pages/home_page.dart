@@ -22,91 +22,112 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final scrollController = ScrollController();
-  final List<GlobalKey>navbarKeys = List.generate(4, (index)=>GlobalKey());
+  final List<GlobalKey> navbarKeys = List.generate(4, (index) => GlobalKey());
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final screenWidth = screenSize.width;
-    return LayoutBuilder(builder: (context, constraints) {
-      return Scaffold(
-        key: scaffoldKey,
-        backgroundColor: CustomColor.scaffoldBg,
-        endDrawer: constraints.maxWidth >= minDesktopWidth
-            ? null
-            :  DrawerMobile(onNavItemTap:(int navIndex) {
-              //close drawer
-          scaffoldKey.currentState?.closeEndDrawer();
-              //call func
-          scrollToSection(navIndex);
-        },),
-        body: SingleChildScrollView(
-          controller: scrollController,
-          scrollDirection: Axis.vertical,
-          child: Column(
-            //scrollDirection: Axis.vertical,
-            children: [
-              SizedBox(key: navbarKeys.first,),
-              //Header
-              constraints.maxWidth >= minDesktopWidth
-                  ?  HeaderDesktop(onNavMenuTap:(int navIndex){
-                scrollToSection(navIndex);
-              },)
-                  : HeaderMobile(
-                      onLogoTap: () {},
-                      onMenuTap: () {
-                        scaffoldKey.currentState?.openEndDrawer();
-                      },
-                    ),
-              constraints.maxWidth >= minDesktopWidth
-              ?const MainDesktop()
-              :const MainMobile(),
-          
-              //Skills
-              Container(
-                key: navbarKeys[1],
-                width: screenWidth,
-                color: CustomColor.bgLight1,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 30.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      //title
-                      const Text(
-                        "what I can do",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: CustomColor.whitePrimary,
-                        ),
-                      ),
-          
-                      const SizedBox(
-                        height: 55,
-                      ),
-                      //platforms & skills
-                      constraints.maxWidth >=mediumDesktopWidth
-                      ?const SkillsDesktop()
-                      :const SkillsMobile(),
-                    ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Scaffold(
+            key: scaffoldKey,
+            backgroundColor: CustomColor.scaffoldBg,
+            endDrawer: constraints.maxWidth >= minDesktopWidth
+                ? null
+                : DrawerMobile(
+                    onNavItemTap: (int navIndex) {
+                      //close drawer
+                      scaffoldKey.currentState?.closeEndDrawer();
+                      //call func
+                      scrollToSection(navIndex);
+                    },
                   ),
-                ),
-              ),
-              const SizedBox(height: 30,),
-              //PROJECT
-               ProjectsSection(key: navbarKeys[2],),
-              //contact
-               ContactSection(key: navbarKeys[3]),
-              //Footer
-              const Footer(),
-            ],
-          ),
-        ),
-      );
-    },);
+            body: Flex(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                direction: Axis.vertical,
+                children: [
+
+                  
+                  //header
+                  constraints.maxWidth >= minDesktopWidth
+                      ? HeaderDesktop(
+                          onNavMenuTap: (int navIndex) {
+                            scrollToSection(navIndex);
+                          },
+                        )
+                      : HeaderMobile(
+                          onLogoTap: () {},
+                          onMenuTap: () {
+                            scaffoldKey.currentState?.openEndDrawer();
+                          },
+                        ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      scrollDirection: Axis.vertical,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            key: navbarKeys.first,
+                          ),
+                          constraints.maxWidth >= minDesktopWidth
+                              ? const MainDesktop()
+                              : const MainMobile(),
+                    
+                          //Skills
+                          Container(
+                            key: navbarKeys[1],
+                            width: screenWidth,
+                            color: CustomColor.bgLight1,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 30.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  //title
+                                  const Text(
+                                    "what I can do",
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: CustomColor.whitePrimary,
+                                    ),
+                                  ),
+                    
+                                  const SizedBox(
+                                    height: 55,
+                                  ),
+                                  //platforms & skills
+                                  constraints.maxWidth >= mediumDesktopWidth
+                                      ? const SkillsDesktop()
+                                      : const SkillsMobile(),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          //PROJECT
+                          ProjectsSection(
+                            key: navbarKeys[2],
+                          ),
+                          //contact
+                          ContactSection(key: navbarKeys[3]),
+                          //Footer
+                          const Footer(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ]));
+      },
+    );
   }
-  void scrollToSection(int navIndex){
+
+  void scrollToSection(int navIndex) {
     final key = navbarKeys[navIndex];
     Scrollable.ensureVisible(
       key.currentContext!,
@@ -117,5 +138,3 @@ class _HomePageState extends State<HomePage> {
 }
 
 //
-
-

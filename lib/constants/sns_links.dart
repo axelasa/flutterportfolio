@@ -4,5 +4,5 @@ class SnsLinks{
   static const String tiktok = "https://www.tiktok.com/@axelasa0";
   static const String instagram = "https://www.instagram.com/axelasa/";
   static const String X = "https://x.com/AxelAsa2";
-  //static const String blog = "https://www.shohruhak.com/tech";
+  //static const String email = "https://www.shohruhak.com/tech";
 }
