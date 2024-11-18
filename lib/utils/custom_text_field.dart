@@ -8,11 +8,13 @@ class CustomTextField extends StatelessWidget {
     this.controller,
     this.maxLines = 1,
     this.hintText,
+    this.errorText,
   });
 
   final TextEditingController? controller;
   final int maxLines;
   final String? hintText;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +22,7 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       style: const TextStyle(
-        color: CustomColor.scaffoldBg,
+        color: CustomColor.whitePrimary,
       ),
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(16),
@@ -30,8 +32,9 @@ class CustomTextField extends StatelessWidget {
         enabledBorder: getInputBorder,
         border: getInputBorder,
         hintText: hintText,
+        errorText:errorText,
         hintStyle: const TextStyle(
-          color: CustomColor.hintDark,
+          color: Color(0xff979797),
         ),
       ),
     );
@@ -41,7 +44,7 @@ class CustomTextField extends StatelessWidget {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide( // Provide a proper BorderSide object
-        color: Colors.white38, // Change this to your desired color
+        color:Color(0xffb9b9bb), // Change this to your desired color
         width: 1.0, // Change this to your desired width
       ),
     );
