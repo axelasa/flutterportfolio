@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:portfolio/constants/images.dart';
-//import 'package:portfolio/services/email_service.dart'; // Fixed typo
-
 import '../constants/colors.dart';
+import '../constants/images.dart';
 import '../constants/size.dart';
 import '../constants/sns_links.dart';
 import '../services/email_serrvice.dart';
@@ -24,18 +22,18 @@ class _ContactSectionState extends State<ContactSection> {
   final TextEditingController subjectController = TextEditingController();
   final TextEditingController messageController = TextEditingController();
 
-  bool isLoading = false; // Added this line
-
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Added this line
+  bool isLoading = false;
+  final GlobalKey<FormState> _formKeyDesktop = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyMobile = GlobalKey<FormState>();
+  bool _validate = false;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(25, 20, 25, 60),
-      color: CustomColor.bgLight1,
+      color: CustomColor.scaffoldBg,
       child: Column(
         children: [
-          // title
           const Text(
             "Get in touch",
             style: TextStyle(
@@ -54,72 +52,81 @@ class _ContactSectionState extends State<ContactSection> {
                 if (constraints.maxWidth >= minDesktopWidth) {
                   return buildNameEmailFieldDesktop();
                 }
-                // else
                 return buildNameEmailFieldMobile();
               },
             ),
           ),
           const SizedBox(height: 15),
-          // message
           ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: 700,
-
             ),
             child: CustomTextField(
               hintText: "Your message",
               controller: messageController,
               maxLines: 16,
+              errorText: _validate ? 'Please enter your message' : null,
             ),
           ),
           const SizedBox(height: 20),
-          // send button
-          Form( // Wrap ElevatedButton with Form
-            key: _formKey,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 700,
-              ),
-              child: SizedBox(
-                width: double.maxFinite,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (!_formKey.currentState!.validate()) { // Validate form
-                      return;
-                    }
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 700,
+            ),
+            child: SizedBox(
+              width: double.maxFinite,
+              child: ElevatedButton(
+                onPressed: () async {
+                  setState(() {
+                    _validate = messageController.text.isEmpty;
+                  });
 
+                  bool isValid = false;
+
+                  if (isDesktop(context)) {
+                    isValid = _formKeyDesktop.currentState!.validate();
+                  } else {
+                    isValid = _formKeyMobile.currentState!.validate();
+                  }
+
+                  if (!isValid || _validate) {
+                    return;
+                  }
+
+                  setState(() {
+                    isLoading = true; // Show loading indicator
+                  });
+
+                  try {
+                    await SendEmailService.sendMail(
+                      name: nameController.text,
+                      email: emailController.text,
+                      subject: subjectController.text,
+                      message: messageController.text,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Email sent successfully')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to send email')),
+                    );
+                  } finally {
                     setState(() {
-                      isLoading = true; // Show loading indicator
+                      isLoading = false; // Hide loading indicator
                     });
-
-                    try {
-                      await SendEmailService.sendMail(
-                        name: nameController.text,
-                        email: emailController.text,
-                        subject: subjectController.text,
-                        message: messageController.text,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Email sent successfully')),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to send email')),
-                      );
-                    } finally {
-                      setState(() {
-                        isLoading = false; // Hide loading indicator
-                      });
-                    }
-                  },
-                  child: isLoading
-                      ? const CircularProgressIndicator.adaptive(
-                    backgroundColor: Colors.white,
-                  )
-                      : const Text(
-                    "Get in touch",
-                    style: TextStyle(color: CustomColor.whitePrimary),
-                  ),
+                  }
+                },
+                style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all<Color>(CustomColor.yellowPrimary)
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator.adaptive(
+                  backgroundColor: CustomColor.yellowPrimary,
+                )
+                    : const Text(
+                  "Get in touch",
+                  style: TextStyle(color: CustomColor.whitePrimary),
                 ),
               ),
             ),
@@ -140,7 +147,10 @@ class _ContactSectionState extends State<ContactSection> {
               SizedBox(width: 10),
               Text(
                 '+254794227892',
-                style: TextStyle(fontSize: 15),
+                style: TextStyle(
+                  fontSize: 18,
+                  color: CustomColor.whitePrimary,
+                ),
               ),
             ],
           ),
@@ -152,30 +162,11 @@ class _ContactSectionState extends State<ContactSection> {
             child: const Divider(),
           ),
           const SizedBox(height: 15),
-          // SNS icon button links
           Wrap(
             spacing: 12,
             runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              InkWell(
-                onTap: () {
-                  js.context.callMethod('open', [SnsLinks.github]);
-                },
-                child: Image.asset(
-                  github,
-                  width: 28,
-                ),
-              ),
-              InkWell(
-                onTap: () {
-                  js.context.callMethod('open', [SnsLinks.linkedIn]);
-                },
-                child: Image.asset(
-                  linkedin,
-                  width: 28,
-                ),
-              ),
               InkWell(
                 onTap: () {
                   js.context.callMethod('open', [SnsLinks.tiktok]);
@@ -204,114 +195,120 @@ class _ContactSectionState extends State<ContactSection> {
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget buildNameEmailFieldDesktop() {
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            // name
-            Flexible(
-              child: AppInput(
-                label: "Your name",
-                type: TextInputType.text,
-                controller: nameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
+    return Form(
+      key: _formKeyDesktop,
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Flexible(
+                child: AppInput(
+                  label: "Your name",
+                  type: TextInputType.text,
+                  controller: nameController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your name';
+                    }
+                    return null;
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 15),
-            // email
-            Flexible(
-              child: AppInput(
-                label: "Your email",
-                type: TextInputType.emailAddress,
-                controller: emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
+              const SizedBox(width: 15),
+              Flexible(
+                child: AppInput(
+                  label: "Your email",
+                  type: TextInputType.emailAddress,
+                  controller: emailController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 15),
-        AppInput(
-          label: "Subject",
-          type: TextInputType.text,
-          controller: subjectController,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter the subject';
-            }
-            return null;
-          },
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 15),
+          AppInput(
+            label: "Subject",
+            type: TextInputType.text,
+            controller: subjectController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the subject';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  Column buildNameEmailFieldMobile() {
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        // name
-        AppInput(
-          label: "Your name",
-          type: TextInputType.text,
-          controller: nameController,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your name';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 15),
-        // subject
-        AppInput(
-          label: "Subject",
-          type: TextInputType.text,
-          controller: subjectController,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter the subject';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 15),
-        // email
-        AppInput(
-          label: "Your email",
-          type: TextInputType.emailAddress,
-          controller: emailController,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-              return 'Please enter a valid email';
-            }
-            return null;
-          },
-        ),
-      ],
+  Widget buildNameEmailFieldMobile() {
+    return Form(
+      key: _formKeyMobile,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          AppInput(
+            label: "Your name",
+            type: TextInputType.text,
+            controller: nameController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your name';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 15),
+          AppInput(
+            label: "Subject",
+            type: TextInputType.text,
+            controller: subjectController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the subject';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 15),
+          AppInput(
+            label: "Your email",
+            type: TextInputType.emailAddress,
+            controller: emailController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                return 'Please enter a valid email';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
     );
   }
+
+  bool isDesktop(BuildContext context) {
+    return MediaQuery.of(context).size.width >= minDesktopWidth;
+  }
+
 }
