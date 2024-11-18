@@ -107,6 +107,10 @@ class _ContactSectionState extends State<ContactSection> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Email sent successfully')),
                     );
+                    emailController.clear();
+                    subjectController.clear();
+                    nameController.clear();
+                    messageController.clear();
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Failed to send email')),
