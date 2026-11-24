@@ -286,8 +286,9 @@ function Hero() {
           <p className="hero-description">
             I’m Axel. Four of my apps are live right now, for a radio station, a
             health insurer, a telehealth service and a skincare brand. Together
-            they have passed 55K downloads. I write mostly Flutter and work with
-            clients wherever they are.
+            they have passed 55K downloads. On the web, I built the official
+            site for JKUAT Cougars Rugby Club. I write mostly Flutter and work
+            with clients wherever they are.
           </p>
           <div className="hero-actions">
             <a
