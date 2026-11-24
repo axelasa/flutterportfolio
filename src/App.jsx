@@ -266,11 +266,11 @@ function Hero() {
         </p>
         <div className="hero-main">
           <h1 id="hero-heading">
-            <span className="line">I build apps people</span>
+            <span className="line">I build apps and sites</span>
             <span className="line">
-              actually <em>keep</em> on
+              people actually <em>keep</em>
             </span>
-            <span className="line">their phones.</span>
+            <span className="line">coming back to.</span>
           </h1>
           <img
             className="hero-portrait"
