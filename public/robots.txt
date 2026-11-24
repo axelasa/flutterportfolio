@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# TODO: replace axelasa.netlify.app with the production domain.
+Sitemap: https://axelasa.netlify.app/sitemap.xml
